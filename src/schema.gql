@@ -1,0 +1,104 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuditLog {
+  aggregateRootId: String!
+  aggregateRootType: String!
+  createdAt: DateTime!
+  entityId: String!
+  entityType: String!
+  eventId: String!
+  eventType: String!
+  id: ID!
+  occurredAt: DateTime!
+
+  """Full event payload serialized as JSON string"""
+  payload: String!
+  topic: String!
+  updatedAt: DateTime!
+}
+
+input BaseFilterInput {
+  """The field to filter by"""
+  field: String!
+
+  """The operator to filter by"""
+  operator: FilterOperator!
+
+  """The value to filter by"""
+  value: String!
+}
+
+input BaseFindByCriteriaInput {
+  """The filters to find by"""
+  filters: [BaseFilterInput!] = []
+
+  """The pagination to find by"""
+  pagination: BasePaginationInput = {page: 1, perPage: 10}
+
+  """The sorts to find by"""
+  sorts: [BaseSortInput!] = []
+}
+
+input BasePaginationInput {
+  """The page to paginate by"""
+  page: Int!
+
+  """The per page to paginate by"""
+  perPage: Int!
+}
+
+input BaseSortInput {
+  """The direction to sort by"""
+  direction: SortDirection!
+
+  """The field to sort by"""
+  field: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""The operator to filter by"""
+enum FilterOperator {
+  EQUALS
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  IN
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  LIKE
+  NOT_EQUALS
+}
+
+type PaginatedAuditLogResultDto {
+  """The audit logs in the current page"""
+  items: [AuditLog!]!
+
+  """The page number"""
+  page: Int!
+
+  """The number of items per page"""
+  perPage: Int!
+
+  """The total number of items"""
+  total: Int!
+
+  """The total number of pages"""
+  totalPages: Int!
+}
+
+type Query {
+  auditLog(id: String!): AuditLog!
+  auditLogs(criteria: BaseFindByCriteriaInput): PaginatedAuditLogResultDto!
+  health: String!
+}
+
+"""The direction to sort by"""
+enum SortDirection {
+  ASC
+  DESC
+}
