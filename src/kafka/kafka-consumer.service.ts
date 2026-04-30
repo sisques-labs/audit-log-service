@@ -3,6 +3,7 @@ import { KAFKA_CLIENT_ID, KAFKA_CONSUMER_GROUP_ID } from '@/kafka/kafka.constant
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CommandBus } from '@nestjs/cqrs';
+import { SchemaRegistryService } from '@sisques-labs/nestjs-kit';
 import { Admin, Consumer, Kafka, KafkaMessage } from 'kafkajs';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     private readonly commandBus: CommandBus,
+    private readonly schemaRegistry: SchemaRegistryService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -86,7 +88,18 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const raw = JSON.parse(message.value.toString()) as Record<string, any>;
+      let raw: Record<string, any>;
+
+      try {
+        raw = await this.schemaRegistry.decode<Record<string, any>>(message.value);
+        // Avro payload uses `data` for the event payload; map to top-level for command
+        if (raw.data && typeof raw.data === 'object') {
+          raw = { ...raw, ...raw.data };
+        }
+      } catch {
+        this.logger.debug(`Topic ${topic}: not an Avro message, falling back to JSON`);
+        raw = JSON.parse(message.value.toString()) as Record<string, any>;
+      }
 
       const command = new CreateAuditLogCommand({
         eventId: raw.eventId ?? crypto.randomUUID(),
