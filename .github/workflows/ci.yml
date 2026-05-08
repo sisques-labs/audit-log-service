@@ -9,8 +9,6 @@ jobs:
   build:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
     steps:
       - name: Setup
