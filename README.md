@@ -1,99 +1,119 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# audit-log-service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Immutable event store that captures every domain event from the system. Subscribes to all Kafka topics automatically, persists events as audit log records, and provides a read-only query interface for compliance, debugging, and analytics.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
 
-## Description
+- **NestJS 10** — CQRS, DDD, Hexagonal Architecture
+- **MongoDB** — append-only persistence (write-once, never updated)
+- **GraphQL** (Apollo Server 4) + **REST** (read-only)
+- **Kafka** + **Confluent Schema Registry** (Avro + JSON fallback) — event consumption
+- **pnpm** — package manager
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Getting Started
 
 ```bash
-$ pnpm install
+pnpm install
+cp .env.example .env   # fill in required values
+pnpm start:dev
 ```
 
-## Compile and run the project
+## Environment Variables
+
+| Variable | Default | Required | Description |
+|---|---|---|---|
+| `PORT` | `3001` | | HTTP server port |
+| `APP_NAME` | `audit-log-service` | | Service identifier |
+| `LOG_LEVEL` | `info` | | Winston log level |
+| `MONGODB_URI` | `mongodb://localhost:27017` | ✓ | MongoDB connection string |
+| `MONGODB_DATABASE` | `audit-log-service` | | Database name |
+| `KAFKA_BROKERS` | `localhost:9092` | ✓ | Comma-separated Kafka brokers |
+| `KAFKA_CLIENT_ID` | `audit-log-service` | | Kafka client identifier |
+| `KAFKA_CONSUMER_GROUP_ID` | `audit-log-consumer-group` | | Kafka consumer group |
+| `SCHEMA_REGISTRY_HOST` | `http://localhost:8081` | | Confluent Schema Registry URL |
+| `NODE_AUTH_TOKEN` | | ✓ | GitHub token with `read:packages` for `@sisques-labs` packages |
+
+## API
+
+### REST
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/audit-logs` | List audit logs (query: `page`, `perPage`) |
+| `GET` | `/audit-logs/:id` | Get audit log entry by ID |
+
+### GraphQL
+
+```graphql
+# Queries
+auditLog(id: String!): AuditLogResponseDto
+auditLogs(criteria: BaseFindByCriteriaInput): PaginatedAuditLogResultDto
+```
+
+## Domain
+
+### AuditLog Aggregate (immutable)
+
+```typescript
+{
+  id: string;                        // UUID of the audit record
+  eventId: string;                   // source event ID
+  eventType: string;                 // e.g. "PromptCreatedEvent"
+  topic: string;                     // Kafka topic where event was consumed
+  aggregateRootId: string;           // domain aggregate ID
+  aggregateRootType: string;         // e.g. "PromptAggregate"
+  entityId: string;
+  entityType: string;
+  occurredAt: Date;                  // when the original event happened
+  payload: Record<string, unknown>;  // full original event payload
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Kafka Consumption
+
+At startup the service calls `listTopics()` and subscribes to **every non-system topic** (excludes topics prefixed with `_`). Any new service that publishes to Kafka is automatically captured without configuration changes.
+
+**Decoding strategy:**
+1. Attempt Avro decode via Schema Registry
+2. Fall back to JSON if Avro fails
+
+## Development
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm start:dev      # watch mode
+pnpm test           # unit tests
+pnpm test:cov       # coverage
+pnpm test:e2e       # e2e tests
+pnpm lint           # ESLint --fix
+pnpm build          # production build
 ```
 
-## Run tests
+### Git Hooks
 
-```bash
-# unit tests
-$ pnpm run test
+Installed via **Husky**:
 
-# e2e tests
-$ pnpm run test:e2e
+- **pre-commit** — `lint-staged`: runs ESLint `--fix` on staged `.ts` files
+- **pre-push** — runs `pnpm build && pnpm test`
 
-# test coverage
-$ pnpm run test:cov
+## Architecture
+
+```
+src/
+├── context/
+│   └── audit-log-context/
+│       ├── application/      # CreateAuditLog command, queries
+│       ├── domain/           # aggregate, value objects, repository interface
+│       └── infrastructure/   # MongoDB repository, mapper
+├── kafka/                    # consumer (auto-discovers all topics)
+└── support/                  # logging, config
 ```
 
-## Deployment
+### Event Capture Flow
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g mau
-$ mau deploy
+```
+Kafka topic (any) → KafkaConsumerService → CreateAuditLogCommand → AuditLogAggregate → MongoDB
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Follows **DDD + CQRS + Hexagonal Architecture** per [sisques-labs NestJS conventions](https://github.com/sisques-labs/ai-registry).
