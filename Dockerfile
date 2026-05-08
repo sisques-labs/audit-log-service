@@ -4,17 +4,13 @@ RUN corepack enable
 
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml .npmrc ./
-RUN --mount=type=secret,id=node_auth_token \
-    NODE_AUTH_TOKEN=$(cat /run/secrets/node_auth_token) \
-    pnpm install --frozen-lockfile --prod
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 FROM base AS build
 WORKDIR /app
-COPY package.json pnpm-lock.yaml .npmrc ./
-RUN --mount=type=secret,id=node_auth_token \
-    NODE_AUTH_TOKEN=$(cat /run/secrets/node_auth_token) \
-    pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
