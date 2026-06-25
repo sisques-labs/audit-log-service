@@ -1,6 +1,5 @@
 import { AuditLogFindByCriteriaQuery } from '@/contexts/audit/application/queries/find-by-criteria/audit-log-find-by-criteria.query';
 import { AuditLogFindByIdQuery } from '@/contexts/audit/application/queries/find-by-id/audit-log-find-by-id.query';
-import { AuditLogAggregate } from '@/contexts/audit/domain/aggregates/audit-log/audit-log.aggregate';
 import { AuditLogViewModel } from '@/contexts/audit/domain/view-models/audit-log/audit-log.view-model';
 import {
   AuditLogRestResponseDto,
@@ -24,14 +23,11 @@ export class AuditLogQueriesController {
   async findById(@Param('id') id: string): Promise<AuditLogRestResponseDto> {
     this.logger.log(`GET /audit-logs/${id}`);
 
-    const aggregate = await this.queryBus.execute<
+    const viewModel = await this.queryBus.execute<
       AuditLogFindByIdQuery,
-      AuditLogAggregate
+      AuditLogViewModel
     >(new AuditLogFindByIdQuery({ id }));
 
-    const viewModel = AuditLogViewModel.fromPrimitives(
-      aggregate.toPrimitives(),
-    );
     return this.auditLogRestMapper.toResponseDto(viewModel);
   }
 
@@ -49,20 +45,9 @@ export class AuditLogQueriesController {
 
     const result = await this.queryBus.execute<
       AuditLogFindByCriteriaQuery,
-      PaginatedResult<AuditLogAggregate>
+      PaginatedResult<AuditLogViewModel>
     >(new AuditLogFindByCriteriaQuery({ criteria }));
 
-    const viewModels = result.items.map((agg) =>
-      AuditLogViewModel.fromPrimitives(agg.toPrimitives()),
-    );
-
-    return this.auditLogRestMapper.toPaginatedResponseDto(
-      new PaginatedResult(
-        viewModels,
-        result.total,
-        result.page,
-        result.perPage,
-      ),
-    );
+    return this.auditLogRestMapper.toPaginatedResponseDto(result);
   }
 }

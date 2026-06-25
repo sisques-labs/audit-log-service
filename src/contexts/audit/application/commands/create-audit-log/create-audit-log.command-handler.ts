@@ -2,9 +2,9 @@ import { CreateAuditLogCommand } from '@/contexts/audit/application/commands/cre
 import { AuditLogAggregate } from '@/contexts/audit/domain/aggregates/audit-log/audit-log.aggregate';
 import { AuditLogAggregateBuilder } from '@/contexts/audit/domain/builders/audit-log/audit-log-aggregate.builder';
 import {
-  AUDIT_LOG_WRITE_REPOSITORY_TOKEN,
+  AUDIT_LOG_WRITE_REPOSITORY,
   IAuditLogWriteRepository,
-} from '@/contexts/audit/domain/repositories/audit-log-write.repository';
+} from '@/contexts/audit/domain/repositories/write/audit-log-write.repository';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { BaseCommandHandler } from '@sisques-labs/nestjs-kit';
@@ -18,7 +18,7 @@ export class CreateAuditLogCommandHandler
   private readonly logger = new Logger(CreateAuditLogCommandHandler.name);
 
   constructor(
-    @Inject(AUDIT_LOG_WRITE_REPOSITORY_TOKEN)
+    @Inject(AUDIT_LOG_WRITE_REPOSITORY)
     private readonly auditLogWriteRepository: IAuditLogWriteRepository,
     private readonly auditLogAggregateBuilder: AuditLogAggregateBuilder,
     eventBus: EventBus,
