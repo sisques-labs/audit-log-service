@@ -94,7 +94,6 @@ type PaginatedAuditLogResultDto {
 type Query {
   auditLog(id: String!): AuditLog!
   auditLogs(criteria: BaseFindByCriteriaInput): PaginatedAuditLogResultDto!
-  health: String!
 }
 
 """The direction to sort by"""
