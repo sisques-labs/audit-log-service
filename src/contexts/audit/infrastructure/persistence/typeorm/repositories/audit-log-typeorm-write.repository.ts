@@ -59,7 +59,10 @@ export class AuditLogTypeOrmWriteRepository
 
   async save(aggregate: AuditLogAggregate): Promise<AuditLogAggregate> {
     const entity = this.mapper.toEntity(aggregate);
-    await this.repository.save(entity);
+    // Audit logs are append-only and the id is assigned by the domain. Use
+    // insert() (not save()) so TypeORM always issues an INSERT — save() would
+    // treat the pre-set primary key as an existing row and silently UPDATE 0 rows.
+    await this.repository.insert(entity);
     return this.mapper.toAggregate(entity);
   }
 
