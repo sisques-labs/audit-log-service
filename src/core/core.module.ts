@@ -1,8 +1,8 @@
-import { AuditLogContextModule } from '@/core/audit-log-context/audit-log-context.module';
+import { AuditModule } from '@/contexts/audit/audit.module';
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [AuditLogContextModule],
-  exports: [AuditLogContextModule],
+  imports: [AuditModule],
+  exports: [AuditModule],
 })
 export class CoreModule {}

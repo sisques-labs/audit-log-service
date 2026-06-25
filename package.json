@@ -2,7 +2,7 @@
   "name": "audit-log-service",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Sisques Labs",
   "private": true,
   "license": "UNLICENSED",
   "packageManager": "pnpm@10.9.0",
