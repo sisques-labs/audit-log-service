@@ -11,40 +11,11 @@ export class AuditLogTypeOrmMapper {
   ) {}
 
   public toAggregate(entity: AuditLogTypeOrmEntity): AuditLogAggregate {
-    return this.auditLogAggregateBuilder
-      .reset()
-      .fromPrimitives({
-        id: entity.id,
-        eventId: entity.eventId,
-        eventType: entity.eventType,
-        topic: entity.topic,
-        aggregateRootId: entity.aggregateRootId,
-        aggregateRootType: entity.aggregateRootType,
-        entityId: entity.entityId,
-        entityType: entity.entityType,
-        occurredAt: entity.occurredAt,
-        payload: (entity.payload ?? {}) as Record<string, any>,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      })
-      .build();
+    return this.hydrateBuilder(entity).build();
   }
 
   public toViewModel(entity: AuditLogTypeOrmEntity): AuditLogViewModel {
-    return AuditLogViewModel.fromPrimitives({
-      id: entity.id,
-      eventId: entity.eventId,
-      eventType: entity.eventType,
-      topic: entity.topic,
-      aggregateRootId: entity.aggregateRootId,
-      aggregateRootType: entity.aggregateRootType,
-      entityId: entity.entityId,
-      entityType: entity.entityType,
-      occurredAt: entity.occurredAt,
-      payload: (entity.payload ?? {}) as Record<string, any>,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
-    });
+    return this.hydrateBuilder(entity).buildViewModel();
   }
 
   public toEntity(aggregate: AuditLogAggregate): AuditLogTypeOrmEntity {
@@ -65,5 +36,23 @@ export class AuditLogTypeOrmMapper {
     entity.updatedAt = primitives.updatedAt;
 
     return entity;
+  }
+
+  private hydrateBuilder(
+    entity: AuditLogTypeOrmEntity,
+  ): AuditLogAggregateBuilder {
+    return this.auditLogAggregateBuilder
+      .withId(entity.id)
+      .withEventId(entity.eventId)
+      .withEventType(entity.eventType)
+      .withTopic(entity.topic)
+      .withAggregateRootId(entity.aggregateRootId)
+      .withAggregateRootType(entity.aggregateRootType)
+      .withEntityId(entity.entityId)
+      .withEntityType(entity.entityType)
+      .withOccurredAt(entity.occurredAt)
+      .withPayload((entity.payload ?? {}) as Record<string, any>)
+      .withCreatedAt(entity.createdAt)
+      .withUpdatedAt(entity.updatedAt);
   }
 }

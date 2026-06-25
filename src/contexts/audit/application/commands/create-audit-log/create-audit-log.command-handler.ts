@@ -8,7 +8,6 @@ import {
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { BaseCommandHandler } from '@sisques-labs/nestjs-kit';
-import { DateValueObject } from '@sisques-labs/nestjs-kit';
 
 @CommandHandler(CreateAuditLogCommand)
 export class CreateAuditLogCommandHandler
@@ -31,20 +30,19 @@ export class CreateAuditLogCommandHandler
       `Executing create audit log command for event: ${command.eventType.value}`,
     );
 
-    const now = new DateValueObject(new Date());
+    const now = new Date();
 
     const aggregate = this.auditLogAggregateBuilder
-      .reset()
-      .withId(command.id)
-      .withEventId(command.eventId)
-      .withEventType(command.eventType)
-      .withTopic(command.topic)
-      .withAggregateRootId(command.aggregateRootId)
-      .withAggregateRootType(command.aggregateRootType)
-      .withEntityId(command.entityId)
-      .withEntityType(command.entityType)
-      .withOccurredAt(command.occurredAt)
-      .withPayload(command.payload)
+      .withId(command.id.value)
+      .withEventId(command.eventId.value)
+      .withEventType(command.eventType.value)
+      .withTopic(command.topic.value)
+      .withAggregateRootId(command.aggregateRootId.value)
+      .withAggregateRootType(command.aggregateRootType.value)
+      .withEntityId(command.entityId.value)
+      .withEntityType(command.entityType.value)
+      .withOccurredAt(command.occurredAt.value)
+      .withPayload(command.payload.value)
       .withCreatedAt(now)
       .withUpdatedAt(now)
       .build();
