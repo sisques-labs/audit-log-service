@@ -9,9 +9,18 @@ import {
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { CommandBus } from '@nestjs/cqrs';
-import { SchemaRegistryService } from '@sisques-labs/nestjs-kit';
 import { Admin, Consumer, Kafka, KafkaMessage, SASLOptions } from 'kafkajs';
 
+/**
+ * Inbound Kafka consumer that turns every domain event published by the
+ * platform into an audit log.
+ *
+ * Messages are plain JSON envelopes (the shape emitted by the shared messaging
+ * adapter): `{ eventId, eventType, action, module, aggregateRootId,
+ * aggregateRootType, entityId, entityType, schemaVersion, occurredAt,
+ * correlationId, causationId, data }`. The full envelope is persisted as the
+ * audit `payload`; the first-level fields are promoted onto the audit record.
+ */
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(KafkaConsumerService.name);
@@ -24,7 +33,6 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
     @Inject(kafkaConfig.KEY)
     private readonly config: ConfigType<typeof kafkaConfig>,
     private readonly commandBus: CommandBus,
-    private readonly schemaRegistry: SchemaRegistryService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -117,34 +125,28 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    let envelope: Record<string, any>;
+
     try {
-      let raw: Record<string, any>;
+      envelope = JSON.parse(message.value.toString()) as Record<string, any>;
+    } catch (error) {
+      this.logger.error(
+        `Failed to parse JSON message from topic ${topic}: ${(error as Error).message}`,
+      );
+      return;
+    }
 
-      try {
-        raw = await this.schemaRegistry.decode<Record<string, any>>(
-          message.value,
-        );
-        // Avro payload uses `data` for the event payload; map to top-level for command
-        if (raw.data && typeof raw.data === 'object') {
-          raw = { ...raw, ...raw.data };
-        }
-      } catch {
-        this.logger.debug(
-          `Topic ${topic}: not an Avro message, falling back to JSON`,
-        );
-        raw = JSON.parse(message.value.toString()) as Record<string, any>;
-      }
-
+    try {
       const command = new CreateAuditLogCommand({
-        eventId: raw.eventId ?? crypto.randomUUID(),
-        eventType: raw.eventType ?? 'UnknownEvent',
+        eventId: envelope.eventId ?? crypto.randomUUID(),
+        eventType: envelope.eventType ?? 'UnknownEvent',
         topic,
-        aggregateRootId: raw.aggregateRootId ?? 'unknown',
-        aggregateRootType: raw.aggregateRootType ?? 'unknown',
-        entityId: raw.entityId ?? 'unknown',
-        entityType: raw.entityType ?? 'unknown',
-        occurredAt: raw.ocurredAt ?? raw.occurredAt ?? new Date(),
-        payload: raw,
+        aggregateRootId: envelope.aggregateRootId ?? 'unknown',
+        aggregateRootType: envelope.aggregateRootType ?? 'unknown',
+        entityId: envelope.entityId ?? 'unknown',
+        entityType: envelope.entityType ?? 'unknown',
+        occurredAt: envelope.occurredAt ?? new Date(),
+        payload: envelope,
       });
 
       await this.commandBus.execute(command);

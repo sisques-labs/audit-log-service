@@ -29,7 +29,6 @@ export interface IKafkaConfig {
   brokers: string[];
   /** Topics are consumed when their name starts with any of these prefixes. */
   topicPrefixes: string[];
-  schemaRegistryHost: string;
   ssl: boolean;
   sasl: IKafkaSaslConfig | null;
 }
@@ -60,8 +59,6 @@ export const kafkaConfig = registerAs('kafka', (): IKafkaConfig => {
       process.env.KAFKA_CONSUMER_GROUP_ID?.trim() || KAFKA_CONSUMER_GROUP_ID,
     brokers: parseList(process.env.KAFKA_BROKERS),
     topicPrefixes: parseList(process.env.KAFKA_TOPIC_PREFIXES),
-    schemaRegistryHost:
-      process.env.SCHEMA_REGISTRY_HOST?.trim() || 'http://localhost:8081',
     ssl: process.env.KAFKA_SSL === 'true',
     sasl: resolveSasl(),
   };
