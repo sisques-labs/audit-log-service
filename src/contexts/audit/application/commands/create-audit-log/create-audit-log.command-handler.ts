@@ -49,10 +49,6 @@ export class CreateAuditLogCommandHandler
 
     await this.auditLogWriteRepository.save(aggregate);
 
-    this.logger.log(
-      `Audit log ${aggregate.id.value} persisted for event ${command.eventType.value}`,
-    );
-
     return aggregate.id.value;
   }
 }
