@@ -2,13 +2,12 @@ import { CreateAuditLogCommand } from '@/contexts/audit/application/commands/cre
 import { AuditLogAggregate } from '@/contexts/audit/domain/aggregates/audit-log/audit-log.aggregate';
 import { AuditLogAggregateBuilder } from '@/contexts/audit/domain/builders/audit-log/audit-log-aggregate.builder';
 import {
-  AUDIT_LOG_WRITE_REPOSITORY_TOKEN,
+  AUDIT_LOG_WRITE_REPOSITORY,
   IAuditLogWriteRepository,
-} from '@/contexts/audit/domain/repositories/audit-log-write.repository';
+} from '@/contexts/audit/domain/repositories/write/audit-log-write.repository';
 import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { BaseCommandHandler } from '@sisques-labs/nestjs-kit';
-import { DateValueObject } from '@sisques-labs/nestjs-kit';
 
 @CommandHandler(CreateAuditLogCommand)
 export class CreateAuditLogCommandHandler
@@ -18,7 +17,7 @@ export class CreateAuditLogCommandHandler
   private readonly logger = new Logger(CreateAuditLogCommandHandler.name);
 
   constructor(
-    @Inject(AUDIT_LOG_WRITE_REPOSITORY_TOKEN)
+    @Inject(AUDIT_LOG_WRITE_REPOSITORY)
     private readonly auditLogWriteRepository: IAuditLogWriteRepository,
     private readonly auditLogAggregateBuilder: AuditLogAggregateBuilder,
     eventBus: EventBus,
@@ -31,20 +30,19 @@ export class CreateAuditLogCommandHandler
       `Executing create audit log command for event: ${command.eventType.value}`,
     );
 
-    const now = new DateValueObject(new Date());
+    const now = new Date();
 
     const aggregate = this.auditLogAggregateBuilder
-      .reset()
-      .withId(command.id)
-      .withEventId(command.eventId)
-      .withEventType(command.eventType)
-      .withTopic(command.topic)
-      .withAggregateRootId(command.aggregateRootId)
-      .withAggregateRootType(command.aggregateRootType)
-      .withEntityId(command.entityId)
-      .withEntityType(command.entityType)
-      .withOccurredAt(command.occurredAt)
-      .withPayload(command.payload)
+      .withId(command.id.value)
+      .withEventId(command.eventId.value)
+      .withEventType(command.eventType.value)
+      .withTopic(command.topic.value)
+      .withAggregateRootId(command.aggregateRootId.value)
+      .withAggregateRootType(command.aggregateRootType.value)
+      .withEntityId(command.entityId.value)
+      .withEntityType(command.entityType.value)
+      .withOccurredAt(command.occurredAt.value)
+      .withPayload(command.payload.value)
       .withCreatedAt(now)
       .withUpdatedAt(now)
       .build();

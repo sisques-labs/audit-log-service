@@ -14,7 +14,7 @@ export class AuditLogViewModel extends BaseViewModel {
   private _payload: Record<string, any>;
 
   constructor(props: IAuditLogViewModelDto) {
-    super(props);
+    super(props.id, props.createdAt, props.updatedAt);
     this._eventId = props.eventId;
     this._eventType = props.eventType;
     this._topic = props.topic;

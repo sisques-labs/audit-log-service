@@ -1,10 +1,7 @@
 import { AuditLogFindByIdQuery } from '@/contexts/audit/application/queries/find-by-id/audit-log-find-by-id.query';
-import { AuditLogAggregate } from '@/contexts/audit/domain/aggregates/audit-log/audit-log.aggregate';
-import {
-  AUDIT_LOG_WRITE_REPOSITORY_TOKEN,
-  IAuditLogWriteRepository,
-} from '@/contexts/audit/domain/repositories/audit-log-write.repository';
-import { Inject, Logger, NotFoundException } from '@nestjs/common';
+import { AssertAuditLogViewModelExistsService } from '@/contexts/audit/application/services/read/assert-audit-log-view-model-exists/assert-audit-log-view-model-exists.service';
+import { AuditLogViewModel } from '@/contexts/audit/domain/view-models/audit-log/audit-log.view-model';
+import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 @QueryHandler(AuditLogFindByIdQuery)
@@ -12,19 +9,12 @@ export class AuditLogFindByIdQueryHandler implements IQueryHandler<AuditLogFindB
   private readonly logger = new Logger(AuditLogFindByIdQueryHandler.name);
 
   constructor(
-    @Inject(AUDIT_LOG_WRITE_REPOSITORY_TOKEN)
-    private readonly auditLogWriteRepository: IAuditLogWriteRepository,
+    private readonly assertAuditLogViewModelExists: AssertAuditLogViewModelExistsService,
   ) {}
 
-  async execute(query: AuditLogFindByIdQuery): Promise<AuditLogAggregate> {
+  async execute(query: AuditLogFindByIdQuery): Promise<AuditLogViewModel> {
     this.logger.log(`Executing find audit log by id query: ${query.id}`);
 
-    const auditLog = await this.auditLogWriteRepository.findById(query.id);
-
-    if (!auditLog) {
-      throw new NotFoundException(`AuditLog with id ${query.id} not found`);
-    }
-
-    return auditLog;
+    return this.assertAuditLogViewModelExists.execute(query.id);
   }
 }
