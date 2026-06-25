@@ -1,7 +1,7 @@
 import '@sisques-labs/nestjs-kit/registered-enums';
 
-import { CoreModule } from '@/core/core.module';
-import { SupportModule } from '@/support/support.module';
+import { AuditModule } from '@/contexts/audit/audit.module';
+import { MessagingModule } from '@/core/messaging/messaging.module';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
@@ -9,10 +9,6 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 import { HealthModule } from './health/health.module';
-import { KafkaModule } from './kafka/kafka.module';
-
-const FEATURES = [CoreModule];
-const SUPPORT = [SupportModule];
 
 @Module({
   imports: [
@@ -31,9 +27,8 @@ const SUPPORT = [SupportModule];
           : [ApolloServerPluginLandingPageLocalDefault()],
     }),
     HealthModule,
-    KafkaModule,
-    ...FEATURES,
-    ...SUPPORT,
+    AuditModule,
+    MessagingModule,
   ],
 })
 export class AppModule {}
