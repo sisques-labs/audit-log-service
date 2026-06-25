@@ -13,7 +13,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { join } from 'path';
-import { HealthModule } from './health/health.module';
+import { HealthModule } from '@/core/health/health.module';
 import { SupportModule } from './support/support.module';
 
 @Module({
