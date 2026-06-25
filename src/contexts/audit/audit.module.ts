@@ -11,6 +11,8 @@ import { AuditLogTypeOrmReadRepository } from '@/contexts/audit/infrastructure/p
 import { AuditLogTypeOrmWriteRepository } from '@/contexts/audit/infrastructure/persistence/typeorm/repositories/audit-log-typeorm-write.repository';
 import { AuditLogGraphqlMapper } from '@/contexts/audit/transport/graphql/mappers/audit-log-graphql.mapper';
 import { AuditLogQueriesResolver } from '@/contexts/audit/transport/graphql/resolvers/audit-log-queries.resolver';
+import { AuditLogFindByCriteriaMcpTool } from '@/contexts/audit/transport/mcp/tools/audit-log-find-by-criteria.tool';
+import { AuditLogFindByIdMcpTool } from '@/contexts/audit/transport/mcp/tools/audit-log-find-by-id.tool';
 import { AuditLogQueriesController } from '@/contexts/audit/transport/rest/controllers/audit-log-queries.controller';
 import { AuditLogRestMapper } from '@/contexts/audit/transport/rest/mappers/audit-log-rest.mapper';
 import { Module } from '@nestjs/common';
@@ -48,6 +50,8 @@ const REST_PROVIDERS = [AuditLogRestMapper];
 
 const GRAPHQL_PROVIDERS = [AuditLogQueriesResolver, AuditLogGraphqlMapper];
 
+const MCP_TOOLS = [AuditLogFindByIdMcpTool, AuditLogFindByCriteriaMcpTool];
+
 @Module({
   imports: [CqrsModule, TypeOrmModule.forFeature(INFRASTRUCTURE_ENTITIES)],
   controllers: [...REST_CONTROLLERS],
@@ -60,6 +64,7 @@ const GRAPHQL_PROVIDERS = [AuditLogQueriesResolver, AuditLogGraphqlMapper];
     ...INFRASTRUCTURE_REPOSITORIES,
     ...REST_PROVIDERS,
     ...GRAPHQL_PROVIDERS,
+    ...MCP_TOOLS,
   ],
 })
 export class AuditModule {}

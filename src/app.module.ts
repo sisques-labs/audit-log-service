@@ -3,6 +3,7 @@ import '@sisques-labs/nestjs-kit/registered-enums';
 import { AuditModule } from '@/contexts/audit/audit.module';
 import { postgresConfig } from '@/core/config/postgres.config';
 import { BaseExceptionFilter } from '@/core/filters/base-exception.filter';
+import { McpModule } from '@/core/mcp/mcp.module';
 import { MessagingModule } from '@/core/messaging/messaging.module';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -39,6 +40,7 @@ import { SupportModule } from './support/support.module';
     }),
     HealthModule,
     SupportModule,
+    McpModule,
     AuditModule,
     MessagingModule,
   ],

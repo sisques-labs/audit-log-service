@@ -30,6 +30,7 @@
   "dependencies": {
     "@apollo/server": "^4.13.0",
     "@kafkajs/confluent-schema-registry": "^3.9.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/apollo": "^12.2.2",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^10.0.0",
@@ -53,6 +54,7 @@
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.28",
     "winston": "^3.19.0",
+    "zod": "^4.4.3",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
