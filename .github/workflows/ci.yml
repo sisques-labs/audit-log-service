@@ -1,13 +1,15 @@
 name: CI
 
 on:
-  push:
-    branches: [main, dev]
   pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: Lint, Test & Build
+    name: Build audit-log-service
     runs-on: ubuntu-latest
 
     steps:
@@ -18,12 +20,15 @@ jobs:
 
       - name: Install dependencies
         uses: sisques-labs/workflows/.github/actions/install@main
+        with:
+          app_path: "."
+          frozen_lockfile: "true"
 
-      - name: Lint
+      - name: Lint code
         run: pnpm lint
 
-      - name: Test
+      - name: Run unit tests
         run: pnpm test
 
-      - name: Build
+      - name: Build the app
         run: pnpm build
